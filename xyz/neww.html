@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Speech to Text</title>
+  <style>
+    :root {
+      --accent:#d4ff5c;
+      --accent-2:#00d2ff;
+      --ink:#f0f3ff;
+      --muted:#cbd1ff;
+      --radius:18px;
+      --shadow:0 12px 32px rgba(0,0,0,0.25);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body {
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family:Inter, system-ui, sans-serif;
+      background:url('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80') no-repeat center center/cover;
+      color:var(--ink);
+      text-align:center;
+      padding:24px;
+    }
+    .overlay {
+      position:absolute;
+      top:0;left:0;right:0;bottom:0;
+      background:rgba(0,0,0,0.6);
+      z-index:-1;
+    }
+    .container {
+      max-width:780px;
+      background:rgba(20,23,42,0.85);
+      border-radius:24px;
+      padding:60px 40px;
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,0.08);
+      animation:fadeIn 1s ease;
+    }
+    h1 {
+      font-size:2.6rem;
+      margin-bottom:16px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+    p {
+      font-size:1.1rem;
+      color:var(--muted);
+      margin-bottom:30px;
+      line-height:1.6;
+    }
+    .actions {
+      display:flex;
+      justify-content:center;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+    button {
+      padding:14px 28px;
+      font-size:1rem;
+      font-weight:600;
+      border:none;
+      border-radius:var(--radius);
+      cursor:pointer;
+      transition:transform 0.15s ease, box-shadow 0.2s ease;
+    }
+    .primary {
+      background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      color:#14172a;
+      box-shadow:0 6px 18px rgba(124,92,255,0.4);
+    }
+    .primary:hover { transform:translateY(-2px); }
+    .ghost {
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.15);
+      color:var(--ink);
+    }
+    .ghost:hover { background:rgba(255,255,255,0.05); }
+    footer {
+      margin-top:40px;
+      font-size:0.85rem;
+      color:var(--muted);
+    }
+    footer a { color:var(--accent-2); text-decoration:none; }
+    @keyframes fadeIn {
+      from {opacity:0; transform:translateY(10px);}
+      to {opacity:1; transform:translateY(0);}
+    }
+
+    /* Hide app initially */
+    #appPage { display:none; }
+  </style>
+</head>
+<body>
+  <div class="overlay"></div>
+
+  <!-- FRONT PAGE -->
+  <div class="container" id="frontPage">
+    <h1>Speech to Text</h1>
+    <p>
+      Convert your voice into text instantly using the Web Speech API.<br>
+      Works with multiple languages and lets you save transcripts as text or PDF.
+    </p>
+    <div class="actions">
+      <button class="primary" onclick="startApp()">🎙️ Start Now</button>
+      <button class="ghost" onclick="alert('Feature coming soon!')">ℹ️ Learn More</button>
+    </div>
+    <footer>
+      <p>Built with ❤️ using Web Speech API • <a href="#">Docs</a></p>
+    </footer>
+  </div>
+
+  <!-- APP PAGE -->
+  <div id="appPage" class="container">
+    <h1>🎤 Live Speech to Text</h1>
+    <p id="status">Click Start to begin</p>
+    <select id="lang">
+      <option value="en-US">English</option>
+      <option value="hi-IN">Hindi</option>
+      <option value="mr-IN">Marathi</option>
+      <option value="bn-IN">Bengali</option>
+      <option value="ta-IN">Tamil</option>
+      <option value="te-IN">Telugu</option>
+      <option value="gu-IN">Gujarati</option>
+      <option value="pa-IN">Punjabi</option>
+      <option value="ur-IN">Urdu</option>
+      <option value="es-ES">Spanish</option>
+      <option value="fr-FR">French</option>
+    </select>
+    <div>
+      <button id="startBtn">Start</button>
+      <button id="stopBtn" disabled>Stop</button>
+    </div>
+    <div id="transcript" style="min-height:120px; text-align:left; margin:20px 0; padding:15px; border-radius:var(--radius); background:rgba(255,255,255,0.05);"></div>
+    <button id="clearBtn">Clear</button>
+    <button id="copyBtn">Copy</button>
+    <button id="saveBtn">Save as Text</button>
+    <button id="pdfBtn">Save as PDF</button>
+  </div>
+
+<script>
+  function startApp(){
+    document.getElementById("frontPage").style.display="none";
+    document.getElementById("appPage").style.display="block";
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const status = document.getElementById("status");
+  const transcriptEl = document.getElementById("transcript");
+  const startBtn = document.getElementById("startBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const copyBtn = document.getElementById("copyBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const pdfBtn = document.getElementById("pdfBtn");
+  const lang = document.getElementById("lang");
+
+  let recog, recognizing=false, transcript="";
+
+  if(SR){
+    recog=new SR();
+    recog.continuous=true;
+    recog.interimResults=true;
+
+    recog.onresult=e=>{
+      let final="";
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal){
+          transcript+=" "+e.results[i][0].transcript;
+        }else{
+          final+=e.results[i][0].transcript;
+        }
+      }
+      transcriptEl.textContent=transcript+" "+final;
+    };
+
+    recog.onstart=()=>{status.textContent="Listening...";};
+    recog.onend=()=>{status.textContent="Stopped";recognizing=false;startBtn.disabled=false;stopBtn.disabled=true;};
+    recog.onerror=e=>{status.textContent="Error: "+e.error;};
+  } else {
+    status.textContent="Speech Recognition not supported in this browser.";
+    startBtn.disabled=true;
+  }
+
+  startBtn.onclick=()=>{
+    if(recog && !recognizing){
+      recog.lang=lang.value;
+      recog.start();
+      recognizing=true;
+      startBtn.disabled=true;
+      stopBtn.disabled=false;
+    }
+  };
+  stopBtn.onclick=()=>{if(recog){recog.stop();}};
+  clearBtn.onclick=()=>{transcript="";transcriptEl.textContent="";};
+  copyBtn.onclick=()=>{navigator.clipboard.writeText(transcriptEl.textContent);alert("Copied!");};
+  saveBtn.onclick=()=>{
+    const blob=new Blob([transcriptEl.textContent],{type:"text/plain"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="transcript.txt";
+    a.click();
+  };
+  pdfBtn.onclick=()=>{
+    import('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js')
+    .then(({jsPDF})=>{
+      const doc=new jsPDF();
+      doc.text(transcriptEl.textContent,10,10);
+      doc.save("transcript.pdf");
+    });
+  };
+</script>
+</body>
+</html>

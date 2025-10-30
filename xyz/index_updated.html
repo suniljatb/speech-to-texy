@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Speech to Text</title>
+  <style>
+    :root{
+      --bg:#679832;--card:#2d3921;--ink:#e7e9f7;--muted:#a8adcf;
+      --accent:#d4ff5c;--accent-2:#00d2ff;--danger:#ff5876;
+      --radius:16px;--shadow:0 10px 30px rgba(0, 0, 0, 0.342);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
+      background:radial-gradient(1200px 800px at 80% -10%, rgba(124,92,255,.20), transparent 60%),
+                 radial-gradient(900px 700px at 10% 110%, rgba(0,210,255,.20), transparent 60%),
+                 var(--bg);
+      color:var(--ink);
+    }
+    /* --- FRONT PAGE --- */
+    #frontPage {
+      height:100%; display:flex; align-items:center; justify-content:center; padding:24px;
+    }
+    .container {
+      max-width:780px;
+      background:linear-gradient(180deg, #2a3119 0%, #14172a 100%);
+      border-radius:24px;
+      padding:60px 40px;
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,0.08);
+      text-align:center;
+      animation:fadeIn 1s ease;
+    }
+    h1 {
+      font-size:2.6rem;
+      margin-bottom:16px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      background-clip:text;
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+    p {
+      font-size:1.1rem;
+      color:var(--muted);
+      margin-bottom:30px;
+      line-height:1.6;
+    }
+    .actions {display:flex; justify-content:center; gap:16px; flex-wrap:wrap;}
+    button {
+      padding:14px 28px; font-size:1rem; font-weight:600;
+      border:none; border-radius:var(--radius);
+      cursor:pointer; transition:transform 0.15s ease, box-shadow 0.2s ease;
+    }
+    .primary {
+      background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      color:#14172a;
+      box-shadow:0 6px 18px rgba(124,92,255,0.4);
+    }
+    .primary:hover { transform:translateY(-2px); }
+    .ghost {
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.15);
+      color:var(--ink);
+    }
+    .ghost:hover { background:rgba(255,255,255,0.05); }
+    footer { margin-top:40px; font-size:0.85rem; color:var(--muted); }
+    footer a { color:var(--accent-2); text-decoration:none; }
+    @keyframes fadeIn {
+      from {opacity:0; transform:translateY(10px);}
+      to {opacity:1; transform:translateY(0);}
+    }
+
+    /* --- APP PAGE --- */
+    #appPage { display:none; height:100%; padding:24px; }
+    .app{
+      width:min(100%, 980px); margin:auto;
+      background:linear-gradient(180deg, #2a3119 0%, #14172a 100%);
+      border:1px solid rgba(255,255,255,.06); border-radius:24px; box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    header{
+      padding:22px; display:flex; align-items:center; justify-content:space-between; gap:16px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .brand{display:flex; align-items:center; gap:12px}
+    .logo{width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg, var(--accent), var(--accent-2))}
+    .title h1{margin:0; font-size:20px}
+    .title span{font-size:12px; color:var(--muted)}
+    .controls{display:flex; gap:10px; flex-wrap:wrap}
+    select, button.small{
+      appearance:none; border:none; outline:none; color:var(--ink);
+      background:#1c2036; border:1px solid rgba(255,255,255,.08);
+      padding:10px 12px; border-radius:12px; font-size:14px;
+      cursor:pointer;
+    }
+    button.small.primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#14172a}
+    button.small.danger{background:linear-gradient(135deg, #ff6a88, #ff99ac); color:white}
+    .panel{background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:20px; padding:18px; min-height:220px; margin:18px}
+    .transcript{height:300px; overflow:auto; background:#101329; border-radius:14px; padding:16px; line-height:1.6; border:1px dashed rgba(255,255,255,.06)}
+    .placeholder{color:#778}
+  </style>
+</head>
+<body>
+  <!-- FRONT PAGE -->
+  <div id="frontPage">
+    <div class="container">
+      <h1>Speech to Text</h1>
+      <p>Convert your voice into text instantly using the Web Speech API.<br>
+         Works with multiple languages and lets you save transcripts as text or PDF.</p>
+      <div class="actions">
+        <button class="primary" id="startNowBtn">🎙️ Start Now</button>
+        <button class="ghost" onclick="alert('Feature coming soon!')">ℹ️ Learn More</button>
+      </div>
+      <footer>
+        <p>Built with ❤️ using Web Speech API • <a href="#">Docs</a></p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- APP PAGE -->
+  <div id="appPage">
+    <div class="app">
+      <header>
+        <div class="brand">
+          <div class="logo"></div>
+          <div class="title">
+            <h1>Speech to Text</h1>
+            <span>Frontend only • Web Speech API</span>
+          </div>
+        </div>
+        <div class="controls">
+          <select id="lang">
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="hi-IN">Hindi (India)</option>
+            <option value="mr-IN">Marathi (India)</option>
+            <option value="bn-IN">Bengali (India)</option>
+            <option value="ta-IN">Tamil (India)</option>
+            <option value="te-IN">Telugu ( India)</option>
+            <option value="gu-IN">Gujarati (India)</option>
+            <option value="pa-IN">Punjabi (India)</option>
+            <option value="ur-IN">Urdu (India)</option>
+            <option value="es-ES">Spanish (Spain)</option>
+            <option value="fr-FR">French (France)</option>
+          </select>
+          <button class="small primary" id="startBtn">Start</button>
+          <button class="small danger" id="stopBtn" disabled>Stop</button>
+        </div>
+      </header>
+      <section class="panel">
+        <h3>Transcript</h3>
+        <div id="transcript" class="transcript"><span class="placeholder">Press “Start” and speak…</span></div>
+        <div class="controls" style="margin-top:12px; justify-content:flex-end">
+          <button class="small" id="clearBtn">Clear</button>
+          <button class="small" id="copyBtn">Copy</button>
+          <button class="small" id="saveBtn">Save .txt</button>
+          <button class="small" id="pdfBtn">Save .pdf</button>
+          <button class="small" id="docBtn">Save .doc</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>Transcribe Audio File</h3>
+        <div class="controls" style="gap:8px; flex-wrap:wrap">
+          <input type="file" id="audioFile" accept="audio/*" style="background:#101329; border:1px solid rgba(255,255,255,.08); padding:10px; border-radius:12px" />
+          <button class="small primary" id="fileTranscribeBtn">Transcribe File</button>
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted)"><input type="checkbox" id="punctuationToggle" checked /> Smart punctuation</label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted)"><input type="checkbox" id="denoiseToggle" checked /> Noise reduction</label>
+        </div>
+        <div style="margin-top:10px">
+          <audio id="audioPlayer" controls style="width:100%"></audio>
+        </div>
+        <div id="fileStatus" style="margin-top:10px; font-size:12px; color:var(--muted)"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // Switch from front page to app page
+    document.getElementById("startNowBtn").addEventListener("click", () => {
+      document.getElementById("frontPage").style.display = "none";
+      document.getElementById("appPage").style.display = "block";
+      startRecognition(); // auto-start when entering app
+    });
+
+    // Speech recognition
+    const transcriptEl = document.getElementById("transcript");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const pdfBtn = document.getElementById("pdfBtn");
+    const docBtn = document.getElementById("docBtn");
+    const langSel = document.getElementById("lang");
+    const audioInput = document.getElementById("audioFile");
+    const fileTranscribeBtn = document.getElementById("fileTranscribeBtn");
+    const punctuationToggle = document.getElementById("punctuationToggle");
+    const denoiseToggle = document.getElementById("denoiseToggle");
+    const audioPlayer = document.getElementById("audioPlayer");
+    const fileStatus = document.getElementById("fileStatus");
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recog, recognizing = false, finalTranscript = "";
+    let lastConfidence = null;
+
+    function initRecognition(){
+      if(!SR){ alert("Speech Recognition not supported"); return; }
+      recog = new SR();
+      recog.continuous = true;
+      recog.interimResults = true;
+      recog.lang = langSel.value;
+      recog.onresult = (e) => {
+        let interim = "";
+        for(let i=e.resultIndex;i<e.results.length;i++){
+          const result = e.results[i];
+          const transcript = result[0].transcript;
+          if(result.isFinal){
+            finalTranscript += (finalTranscript && !finalTranscript.endsWith(" ") ? " " : "") + transcript;
+            lastConfidence = typeof result[0].confidence === 'number' ? result[0].confidence : null;
+          } else {
+            interim += transcript;
+          }
+        }
+        const display = (finalTranscript + (interim ? " " + interim : "")).trim();
+        transcriptEl.textContent = applySmartPunctuation(display);
+        transcriptEl.scrollTop = transcriptEl.scrollHeight;
+      };
+      recog.onstart = ()=>{ recognizing=true; };
+      recog.onend = ()=>{ recognizing=false; startBtn.disabled=false; stopBtn.disabled=true; };
+      recog.onerror = (e)=>{
+        let msg = e.error;
+        if(e.error === "no-speech") msg = "No speech detected. Try again.";
+        if(e.error === "audio-capture") msg = "No microphone was found.";
+        if(e.error === "not-allowed") msg = "Microphone access was denied.";
+        alert("Speech Recognition Error: " + msg);
+      };
+    }
+
+    function startRecognition(){
+      if(!recog) initRecognition();
+      if(!recog) return;
+      recog.lang = langSel.value;
+      try {
+        recog.start();
+        recognizing = true;
+        startBtn.disabled = true; stopBtn.disabled = false;
+      } catch(err){
+        // start may throw if called twice quickly
+      }
+    }
+    function stopRecognition(){
+      if(recog && recognizing) recog.stop();
+    }
+
+    startBtn.addEventListener("click", startRecognition);
+    stopBtn.addEventListener("click", stopRecognition);
+    clearBtn.addEventListener("click", ()=>{
+      finalTranscript = "";
+      transcriptEl.textContent = "";
+    });
+    copyBtn.addEventListener("click", async ()=>{
+      try {
+        await navigator.clipboard.writeText(transcriptEl.textContent);
+        alert("Copied to clipboard");
+      } catch {
+        alert("Copy failed. Select and copy manually.");
+      }
+    });
+    saveBtn.addEventListener("click", ()=>{
+      const blob = new Blob([transcriptEl.textContent], {type: "text/plain"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "transcript.txt";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+    pdfBtn.addEventListener("click", ()=>{
+      import('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js').then(({ jsPDF })=>{
+        const doc = new jsPDF();
+        const text = transcriptEl.textContent || "";
+        const lines = doc.splitTextToSize(text, 180);
+        doc.text(lines, 10, 10);
+        doc.save("transcript.pdf");
+      }).catch(()=>alert("Failed to load PDF library"));
+    });
+    docBtn.addEventListener("click", ()=>{
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><pre style="font-family:Arial; white-space:pre-wrap;">${escapeHtml(transcriptEl.textContent)}</pre></body></html>`;
+      const blob = new Blob([html], { type: "application/msword" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "transcript.doc";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    function escapeHtml(s){
+      return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+    }
+
+    function applySmartPunctuation(text){
+      if(!punctuationToggle.checked) return text;
+      let t = text.trim();
+      // Add period if missing at end of a long line
+      if(t && !/[.!?…]$/.test(t) && t.split(' ').length > 8) t += '.';
+      // Capitalize first letter after sentence end
+      t = t.replace(/([.!?]\s+)([a-z])/g, (m,p1,p2)=> p1 + p2.toUpperCase());
+      // Capitalize start
+      t = t.replace(/^\s*([a-z])/,(m,p)=> p.toUpperCase());
+      return t;
+    }
+
+    // -------- File transcription (Whisper on-device via Transformers.js) --------
+    let asrPipeline = null;
+    let whisperLoading = false;
+
+    async function ensureWhisper(){
+      if(asrPipeline || whisperLoading) return;
+      whisperLoading = true;
+      fileStatus.textContent = "Loading on-device model (first time may take a while)…";
+      const mod = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.15.0');
+      // Use small multilingual model for demo; runs fully client-side
+      asrPipeline = await mod.pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny');
+      fileStatus.textContent = "Model ready.";
+    }
+
+    async function readAudioFileAsArrayBuffer(file){
+      return new Promise((resolve, reject)=>{
+        const fr = new FileReader();
+        fr.onload = () => resolve(fr.result);
+        fr.onerror = reject;
+        fr.readAsArrayBuffer(file);
+      });
+    }
+
+    async function decodeAndOptionallyDenoise(arrayBuffer){
+      const audioCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 48000 * 60, 48000);
+      const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const decoded = await tempCtx.decodeAudioData(arrayBuffer.slice(0));
+      tempCtx.close();
+      if(!denoiseToggle.checked){
+        return { sampleRate: decoded.sampleRate, data: decoded.getChannelData(0) };
+      }
+      // Render with simple denoise chain: highpass + compressor
+      const length = Math.ceil(decoded.duration * audioCtx.sampleRate);
+      const offline = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, length, audioCtx.sampleRate);
+      const src = offline.createBufferSource();
+      const buffer = offline.createBuffer(1, Math.floor(decoded.length * offline.sampleRate / decoded.sampleRate), offline.sampleRate);
+      // Resample simple approach using playbackRate
+      // Copy data
+      const ch = buffer.getChannelData(0);
+      const srcData = decoded.getChannelData(0);
+      for(let i=0;i<ch.length;i++){
+        const idx = i * decoded.sampleRate / offline.sampleRate;
+        const i0 = Math.floor(idx);
+        const i1 = Math.min(i0+1, srcData.length-1);
+        const frac = idx - i0;
+        ch[i] = srcData[i0]*(1-frac) + srcData[i1]*frac;
+      }
+      src.buffer = buffer;
+      const hp = offline.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 120;
+      const comp = offline.createDynamicsCompressor();
+      comp.threshold.value = -30;
+      comp.knee.value = 20;
+      comp.ratio.value = 3;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.25;
+      src.connect(hp).connect(comp).connect(offline.destination);
+      src.start();
+      const rendered = await offline.startRendering();
+      return { sampleRate: rendered.sampleRate, data: rendered.getChannelData(0) };
+    }
+
+    function renderSegmentsToTranscript(segments){
+      // Render spans with timestamps for sync
+      const frag = document.createDocumentFragment();
+      segments.forEach((s, idx)=>{
+        const span = document.createElement('span');
+        span.textContent = (idx ? ' ' : '') + s.text.trim();
+        span.dataset.start = (s.timestamp?.[0] ?? 0).toString();
+        span.dataset.end = (s.timestamp?.[1] ?? 0).toString();
+        span.style.transition = 'background-color .15s ease';
+        frag.appendChild(span);
+      });
+      transcriptEl.innerHTML = '';
+      transcriptEl.appendChild(frag);
+    }
+
+    function highlightAtTime(t){
+      const spans = transcriptEl.querySelectorAll('span[data-start]');
+      let active = null;
+      spans.forEach(s=>{
+        const a = parseFloat(s.dataset.start||'0');
+        const b = parseFloat(s.dataset.end||'0');
+        const on = t >= a && (b === 0 || t < b);
+        s.style.backgroundColor = on ? 'rgba(212,255,92,0.18)' : 'transparent';
+        if(on) active = s;
+      });
+      if(active){ active.scrollIntoView({ block:'nearest' }); }
+    }
+
+    audioPlayer.addEventListener('timeupdate', ()=>{
+      highlightAtTime(audioPlayer.currentTime);
+    });
+
+    fileTranscribeBtn.addEventListener('click', async ()=>{
+      const file = audioInput.files?.[0];
+      if(!file){ alert('Please choose an audio file.'); return; }
+      await ensureWhisper();
+      fileStatus.textContent = `Decoding ${file.name}…`;
+      audioPlayer.src = URL.createObjectURL(file);
+      try{
+        const buf = await readAudioFileAsArrayBuffer(file);
+        const processed = await decodeAndOptionallyDenoise(buf);
+        fileStatus.textContent = 'Transcribing (on-device)…';
+        const result = await asrPipeline({
+          array: processed.data,
+          sampling_rate: processed.sampleRate
+        }, {
+          chunk_length_s: 30,
+          return_timestamps: true,
+          language: langSel.value.split('-')[0] // hint
+        });
+        // result.text and result.segments with timestamps
+        renderSegmentsToTranscript(result.segments || [{ text: result.text, timestamp:[0,0] }]);
+        fileStatus.textContent = 'Done.';
+      } catch(err){
+        console.error(err);
+        fileStatus.textContent = 'Failed to transcribe file.';
+        alert('Transcription failed. Try a shorter file or different format.');
+      }
+    });
+  </script>
+</body>
+</html>
