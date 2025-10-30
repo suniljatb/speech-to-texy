@@ -39,3 +39,4 @@ Notes
 - No Google APIs used; inference runs via open-source Whisper (faster-whisper) locally.
 
 
+
